@@ -27,6 +27,7 @@
  */
 
 #include <err.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -46,6 +47,7 @@ int snoop_xinput(Window);
 void snoop_legacy(Window);
 void usage(char *);
 int swallow_error(Display *, XErrorEvent *);
+void handleUSR(int);
 
 /* xinput event type ids to be filled in later */
 static int button_press_type = -1;
@@ -135,6 +137,17 @@ main(int argc, char *argv[])
 	XSetErrorHandler(swallow_error);
 
 	snoop_root();
+
+	/* Setup signal handlers for USR1 and USR2. USR1 hides the cursor, USR2 shows it.
+	 * This is quite buggy, but works for me atm
+	 */
+	struct sigaction sa;
+	sa.sa_handler = &handleUSR;
+	sa.sa_flags = SA_RESTART;
+	sigfillset(&sa.sa_mask);
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+
 
 	if (always_hide)
 		hide_cursor();
@@ -494,4 +507,17 @@ swallow_error(Display *d, XErrorEvent *e)
 		return 0;
 	else
 		errx(1, "got X error %d", e->error_code);
+}
+
+void
+handleUSR(int signal)
+{
+	switch (signal) {
+	case SIGUSR1:
+		hide_cursor();
+		break;
+	case SIGUSR2:
+		show_cursor();
+		break;
+	}
 }
