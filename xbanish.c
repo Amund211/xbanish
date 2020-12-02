@@ -148,7 +148,6 @@ main(int argc, char *argv[])
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
 
-
 	if (always_hide)
 		hide_cursor();
 
@@ -515,9 +514,11 @@ handleUSR(int signal)
 	switch (signal) {
 	case SIGUSR1:
 		hide_cursor();
+		always_hide = 1;
 		break;
 	case SIGUSR2:
 		show_cursor();
+		always_hide = 0;
 		break;
 	}
 }
